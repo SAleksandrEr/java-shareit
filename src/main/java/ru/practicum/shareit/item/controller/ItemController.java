@@ -41,23 +41,15 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDtoResponse updateItem(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId,
                     @Valid @RequestBody ItemDtoPatch item) {
-        if (userId != null & itemId > 0) {
             item.setId(itemId);
             Item modifiItem = itemService.updateItem(itemMapper.toItemDtoPatch(userId, item));
             return itemMapper.toItemDtoResponse(modifiItem);
-        } else {
-            throw new ValidationException("Invalid date - userId or itemId");
-        }
     }
 
     @GetMapping("/{itemId}")
     public ItemDtoResponse findItemId(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable("itemId") Long itemId) {
-        if (userId != null & itemId > 0) {
             Item modifiItem = itemService.getItemId(userId, itemId);
             return itemMapper.toItemDtoResponse(modifiItem);
-        } else {
-            throw new ValidationException("Invalid date - userId or itemId");
-        }
     }
 
     @GetMapping

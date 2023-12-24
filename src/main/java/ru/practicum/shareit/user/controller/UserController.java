@@ -2,7 +2,6 @@ package ru.practicum.shareit.user.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDtoPatch;
 import ru.practicum.shareit.user.dto.UserDtoRequest;
 import ru.practicum.shareit.user.dto.UserResponse;
@@ -36,11 +35,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public UserResponse updateUser(@PathVariable("id") Long id, @RequestBody UserDtoPatch userPatch) {
-        if (id != null & id > 0) {
-            userPatch.setId(id);
-        } else {
-            throw new ValidationException("Invalid date" + userPatch);
-        }
+        userPatch.setId(id);
         User user = userMapper.toUserUpdate(userPatch);
         User modifiUser = userService.updateUser(user);
         return userMapper.toUserResponse(modifiUser);

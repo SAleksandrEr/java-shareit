@@ -59,8 +59,8 @@ public class UserService {
     }
 
     private void validate(User data) {
-        if (userStorage.getAllUser().stream()
-                .anyMatch(user -> user.getEmail().equals(data.getEmail()) & !Objects.equals(data.getId(), user.getId()))) {
+        if (userStorage.getAllUser().stream().filter(user -> !Objects.equals(data.getId(), user.getId()))
+                .anyMatch(user -> user.getEmail().equals(data.getEmail()))) {
             throw new DataConflictException("Invalid date" + data);
         }
     }
