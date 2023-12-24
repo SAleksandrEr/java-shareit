@@ -1,14 +1,15 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.item.dto;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import java.util.List;
 
-@Data
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor(force = true)
-public class Item {
+public class ItemDtoResponse {
 
     private Long id;
 
@@ -17,10 +18,4 @@ public class Item {
     private String description;
 
     private Boolean available;
-
-    private Long owner;
-
-    private Long request;
-
-    private List<String> review;
 }
