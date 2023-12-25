@@ -1,16 +1,17 @@
 package ru.practicum.shareit.item.storage.dao;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemStorage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component("itemDaoImpl")
 public class ItemDaoImpl implements ItemStorage {
 
@@ -21,7 +22,8 @@ public class ItemDaoImpl implements ItemStorage {
     public Item createItem(Item item) {
         item.setId(getGenerationId());
         itemList.put(item.getId(), item);
-        return itemList.get(item.getId());
+        log.info("Вещь создана " + item);
+        return item;
     }
 
     @Override
@@ -36,26 +38,26 @@ public class ItemDaoImpl implements ItemStorage {
     @Override
     public Item updateItem(Item item) {
         itemList.put(item.getId(),item);
-        return itemList.get(item.getId());
+        return item;
     }
 
     @Override
     public List<Item> findItemsByUserId(Long id) {
-        return getAllItem().stream().filter(item -> item.getOwner().equals(id))
+        return itemList.values()
+                .stream()
+                .filter(item -> item.getOwner().equals(id))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Item> searchNameItemsAndDescription(String query) {
-        return getAllItem().stream().filter(item -> item.getAvailable().equals(true))
+        return itemList.values()
+                .stream()
+                .filter(item -> item.getAvailable().equals(true))
                 .filter(item -> item.getName().toLowerCase()
                         .contains(query.toLowerCase()) || item.getDescription().toLowerCase()
                         .contains(query.toLowerCase()))
                 .collect(Collectors.toList());
-    }
-
-    private List<Item> getAllItem() {
-        return new ArrayList<>(itemList.values());
     }
 
     private Long getGenerationId() {

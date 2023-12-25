@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user.storage.dao;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.user.model.User;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component("userDaoImpl")
 public class UserDaoImpl implements UserStorage {
     private Long generationId = 0L;
@@ -20,13 +22,14 @@ public class UserDaoImpl implements UserStorage {
     public User createUser(User user) {
         user.setId(getGenerationId());
         userList.put(user.getId(),user);
-        return userList.get(user.getId());
+        log.info("Пользователь создан " + user);
+        return user;
     }
 
     @Override
     public User updateUser(User user) {
         userList.put(user.getId(),user);
-        return userList.get(user.getId());
+        return user;
     }
 
     @Override
