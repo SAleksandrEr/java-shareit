@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception.controller;
 
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +24,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleNotFoundException(final ValidationException e) {
         return new ErrorResponse(e.getMessage());
     }
@@ -37,6 +38,12 @@ public class ErrorHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleConstraintViolationException(final ConstraintViolationException e) {
+        return new ErrorResponse("Error in object " + e.getLocalizedMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
         return new ErrorResponse("Error in object " + e.getLocalizedMessage());
     }
 

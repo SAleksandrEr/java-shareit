@@ -1,8 +1,7 @@
-package ru.practicum.shareit.booking.dto;
+package ru.practicum.shareit.item.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
@@ -12,19 +11,14 @@ import javax.validation.constraints.NotBlank;
 @Setter
 @SuperBuilder
 @NoArgsConstructor(force = true)
-public class BookingDto {
+public class CommentDto {
 
     private Long id;
 
     @NotBlank
-    private String start;
+    private String text;
 
-    @NotBlank
-    private String end;
-
-    @NonNull
     private Long itemId;
 
-    @NonNull
-    private Long bookerId;
+    private Long authorId;
 }
