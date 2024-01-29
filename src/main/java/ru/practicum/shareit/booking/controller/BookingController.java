@@ -36,8 +36,8 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public BookingDtoResponse updateItem(@RequestHeader("X-Sharer-User-Id") Long userId,
                                              @PathVariable Long bookingId,
-                                             @RequestParam(value = "approved") String approved) {
-        if ((userId != null) && (bookingId != null) && ((approved.equals("true") || (approved.equals("false"))))) {
+                                             @RequestParam(value = "approved") Boolean approved) {
+        if ((userId != null) && (bookingId != null)) {
             return bookingService.updateStatusBooking(userId, bookingId, approved);
         } else {
             throw new ValidationException("Invalid data");

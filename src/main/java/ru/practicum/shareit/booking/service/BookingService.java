@@ -1,7 +1,6 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(isolation = Isolation.READ_COMMITTED, readOnly = true)
@@ -40,7 +38,6 @@ public class BookingService {
 
     @Transactional
     public BookingDtoResponse createBooking(Long userId, BookingDto bookingDto) {
-        Booking booking = bookingMapper.toBooking(bookingDto);
         User user = userRepositoryJpa.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
         Item item = itemRepositoryJpa.findById(bookingDto.getItemId())
@@ -48,21 +45,22 @@ public class BookingService {
         if (Objects.equals(item.getUser().getId(), userId)) {
             throw new DataNotFoundException("The owner cannot accept the Booking " + userId);
         }
+        validate(bookingDto);
+        Booking booking = bookingMapper.toBooking(bookingDto);
         booking.setBooker(user);
         booking.setItem(item);
         booking.setStatus(Status.WAITING);
-        validate(booking);
         return bookingMapper.toBookingResponse(bookingRepositoryJpa.save(booking));
     }
 
     @Transactional
-    public BookingDtoResponse updateStatusBooking(Long userId, Long bookingId, String approved) {
+    public BookingDtoResponse updateStatusBooking(Long userId, Long bookingId, Boolean approved) {
         userRepositoryJpa.findById(userId).orElseThrow(() -> new DataNotFoundException("User not found"));
         Status status = null;
-        if (Objects.equals(approved, "true")) {
+        if (Objects.equals(approved, true)) {
             status = Status.APPROVED;
         }
-        if (Objects.equals(approved, "false")) {
+        if (Objects.equals(approved, false)) {
             status = Status.REJECTED;
         }
         Booking booking = bookingRepositoryJpa.findByBookingIdAndOwner(bookingId, userId)
@@ -145,13 +143,13 @@ public class BookingService {
        }
     }
 
-        private void validate(Booking booking) {
-            LocalDateTime startDate = booking.getStart();
-            LocalDateTime endDate = booking.getEnd();
+        private void validate(BookingDto booking) {
+            LocalDateTime startDate = LocalDateTime.parse(booking.getStart());
+            LocalDateTime endDate = LocalDateTime.parse(booking.getEnd());
             LocalDateTime currentDate = LocalDateTime.now().withNano(0);
         if (startDate.isBefore(endDate) && startDate.isAfter(currentDate)) {
-            List<Booking> bookingList = bookingRepositoryJpa.findByBookingStartBeforeAndEndBefore(startDate, endDate, Status.REJECTED, booking.getItem().getId());
-            Item item = itemRepositoryJpa.findByIdAndAvailableTrue(booking.getItem().getId());
+            List<Booking> bookingList = bookingRepositoryJpa.findByBookingStartBeforeAndEndBefore(startDate, endDate, Status.REJECTED, booking.getItemId());
+            Item item = itemRepositoryJpa.findByIdAndAvailableTrue(booking.getItemId());
             if ((bookingList.size() > 0) || (item == null)) {
                 throw new ValidationException("Invalid data " + booking.getStart() + " " + booking.getEnd());
             }

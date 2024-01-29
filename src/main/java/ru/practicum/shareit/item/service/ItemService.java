@@ -151,8 +151,8 @@ public class ItemService {
 
     @Transactional
     public CommentDtoResponse createCommentItem(Long userId, Long itemId, CommentDto commentDto) {
-        Comment comment = commentMapper.toComment(commentDto);
         validate(userId, itemId);
+        Comment comment = commentMapper.toComment(commentDto);
         User user = userRepositoryJpa.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
         Item item = itemRepositoryJpa.findById(itemId)
