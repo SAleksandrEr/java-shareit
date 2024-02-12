@@ -16,4 +16,15 @@ public class UserResponse {
         private String name;
 
         private String email;
+
+
+        @Getter
+        @Setter
+        @SuperBuilder
+        @NoArgsConstructor(force = true)
+        public static class UserResponseBooking {
+
+                private Long id;
+
+        }
 }

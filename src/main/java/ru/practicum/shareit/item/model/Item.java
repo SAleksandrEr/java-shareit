@@ -1,26 +1,33 @@
 package ru.practicum.shareit.item.model;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import java.util.List;
+import ru.practicum.shareit.user.model.User;
+
+import javax.persistence.*;
 
 @Data
-@SuperBuilder
-@NoArgsConstructor(force = true)
+@Entity
+@Table(name = "items")
 public class Item {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
+    @Column(name = "name_item")
     private String name;
 
+    @Column(name = "description_item")
     private String description;
 
+    @Column(name = "available_item")
     private Boolean available;
 
-    private Long owner;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
+    @Column(name = "request_id")
     private Long request;
-
-    private List<String> review;
 }

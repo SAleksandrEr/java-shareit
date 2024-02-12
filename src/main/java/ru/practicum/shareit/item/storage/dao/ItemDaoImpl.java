@@ -45,7 +45,7 @@ public class ItemDaoImpl implements ItemStorage {
     public List<Item> findItemsByUserId(Long id) {
         return itemList.values()
                 .stream()
-                .filter(item -> item.getOwner().equals(id))
+                .filter(item -> item.getUser().getId().equals(id))
                 .collect(Collectors.toList());
     }
 

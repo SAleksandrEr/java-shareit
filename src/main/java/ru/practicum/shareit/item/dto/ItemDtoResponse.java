@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,4 +21,21 @@ public class ItemDtoResponse {
     private String description;
 
     private Boolean available;
+
+    private BookingDtoResponse.BookingDtoResponseOwner lastBooking;
+
+    private BookingDtoResponse.BookingDtoResponseOwner nextBooking;
+
+    private List<CommentDtoResponse> comments;
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor(force = true)
+    public static class ItemDtoResponseBooking {
+
+        private Long id;
+
+        private String name;
+    }
 }

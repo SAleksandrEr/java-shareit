@@ -1,6 +1,8 @@
 package ru.practicum.shareit.user.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDtoPatch;
 import ru.practicum.shareit.user.dto.UserDtoRequest;
@@ -12,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/users")
+@Transactional(isolation = Isolation.READ_COMMITTED, readOnly = true)
 public class UserController {
 
     private final UserService userService;
@@ -21,11 +24,13 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Transactional
     @PostMapping
     public UserResponse createUser(@Valid @RequestBody UserDtoRequest userRequest) {
         return userService.createUser(userRequest);
     }
 
+    @Transactional
     @PatchMapping("/{id}")
     public UserResponse updateUser(@PathVariable("id") Long id, @RequestBody UserDtoPatch userPatch) {
         userPatch.setId(id);
@@ -37,6 +42,7 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     public void userDeleteById(@PathVariable("id") Long id) {
         userService.deleteUserById(id);

@@ -1,50 +1,68 @@
 package ru.practicum.shareit.item.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.mapper.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.Status;
+import ru.practicum.shareit.booking.storage.BookingRepositoryJpa;
+import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoPatch;
-import ru.practicum.shareit.item.dto.ItemDtoResponse;
+import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.storage.ItemStorage;
-import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.item.storage.CommentRepositoryJpa;
+import ru.practicum.shareit.item.storage.ItemRepositoryJpa;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.storage.UserRepositoryJpa;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
+@Transactional(isolation = Isolation.READ_COMMITTED, readOnly = true)
 public class ItemService {
 
-    private final ItemStorage itemStorage;
-
-    private final UserService userService;
+    private final ItemRepositoryJpa itemRepositoryJpa;
 
     private final ItemMapper itemMapper;
 
-    @Autowired
-    public ItemService(@Qualifier("itemDaoImpl") ItemStorage itemStorage, UserService userService, ItemMapper itemMapper) {
-        this.itemStorage = itemStorage;
-        this.userService = userService;
-        this.itemMapper = itemMapper;
-    }
+    private final UserRepositoryJpa userRepositoryJpa;
 
+    private final BookingRepositoryJpa bookingRepositoryJpa;
+
+    private final BookingMapper bookingMapper;
+
+    private final ItemMapper.CommentMapper commentMapper;
+
+    private final CommentRepositoryJpa commentRepositoryJpa;
+
+    @Transactional
     public ItemDtoResponse createItem(Long userId, ItemDto itemDto) {
-        Item item = itemMapper.toItem(userId, itemDto);
-        userService.findUsersId(item.getOwner());
-        return itemMapper.toItemDtoResponse(itemStorage.createItem(item));
+        Item item = itemMapper.toItem(itemDto);
+        User user = userRepositoryJpa.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        item.setUser(user);
+        return itemMapper.toItemDtoResponse(itemRepositoryJpa.save(item));
     }
 
+    @Transactional
     public ItemDtoResponse updateItem(Long userId, ItemDtoPatch itemDtoPatch) {
-        Item item = itemMapper.toItemDtoPatch(userId, itemDtoPatch);
-        userService.findUsersId(item.getOwner());
-        Item oldItem = itemStorage.getItemId(item.getId());
-        if (item.getOwner().equals(oldItem.getOwner())) {
+        Item item = itemMapper.toItemDtoPatch(itemDtoPatch);
+        User user = userRepositoryJpa.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        item.setUser(user);
+        Item oldItem = itemRepositoryJpa.findById(item.getId())
+                .orElseThrow(() -> new DataNotFoundException("Item not found"));
+        if (item.getUser().getId().equals(oldItem.getUser().getId())) {
             if (item.getName() != null) {
                 oldItem.setName(item.getName());
             }
@@ -55,7 +73,9 @@ public class ItemService {
                 oldItem.setAvailable(item.getAvailable());
             }
             log.info("Вещь обновлена " + oldItem);
-            return itemMapper.toItemDtoResponse(itemStorage.updateItem(oldItem));
+            itemRepositoryJpa.updateItem(oldItem.getName(), oldItem.getDescription(),
+                    oldItem.getAvailable(), oldItem.getId());
+            return itemMapper.toItemDtoResponse(oldItem);
         } else {
             throw new ValidationException("Updating is not possible for the user - '" + userId +
                     "' available only to the owner of the item");
@@ -63,29 +83,89 @@ public class ItemService {
     }
 
     public ItemDtoResponse getItemId(Long userId, Long id) {
-        userService.findUsersId(userId);
-        Item item = itemStorage.getItemId(id);
-        log.info("Получена вещь с id " + id);
-        return itemMapper.toItemDtoResponse(item);
+        userRepositoryJpa.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        Item item = itemRepositoryJpa.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Item not found"));
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        ItemDtoResponse itemDtoResponse = itemMapper.toItemDtoResponseOwner(item);
+        itemDtoResponse.setComments(commentRepositoryJpa.findByItemId(item.getId()).stream()
+                .map(commentMapper::toCommentDtoResponse).collect(Collectors.toList()));
+        if (Objects.equals(item.getUser().getId(), userId)) {
+            List<Booking> bookings = bookingRepositoryJpa.findByItemIdBooking(item.getId());
+            if (bookings.size() > 0) {
+                for (Booking order : bookings) {
+                    if (order.getStart().isBefore(currentDate) && !order.getStatus().equals(Status.REJECTED)) {
+                        BookingDtoResponse.BookingDtoResponseOwner bookingDtoResponse = bookingMapper.toBookingResponseOwner(order);
+                        itemDtoResponse.setLastBooking(bookingDtoResponse);
+                    }
+                    if (order.getStart().isAfter(currentDate) && !order.getStatus().equals(Status.REJECTED)) {
+                        BookingDtoResponse.BookingDtoResponseOwner bookingDtoResponse = bookingMapper.toBookingResponseOwner(order);
+                        itemDtoResponse.setNextBooking(bookingDtoResponse);
+                    }
+                }
+            }
+        }
+            log.info("Получена вещь с id " + id);
+            return itemDtoResponse;
     }
 
-    public List<ItemDtoResponse> findItemsByUserId(Long id) {
-        userService.findUsersId(id);
-        List<Item> items = itemStorage.findItemsByUserId(id);
-        log.info("Получены вещи пользователя с id " + id);
+    public List<ItemDtoResponse> findItemsByUserId(Long userid) {
+        userRepositoryJpa.findById(userid)
+                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        List<Item> items = itemRepositoryJpa.findItemsByUserId(userid);
+        log.info("Получены вещи пользователя с id " + userid);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
         return items.stream()
-                .map(itemMapper::toItemDtoResponse)
-                .collect(Collectors.toList());
+                .map(item -> {
+                    ItemDtoResponse itemDtoResponse = itemMapper.toItemDtoResponseOwner(item);
+                    itemDtoResponse.setComments(commentRepositoryJpa.findByItemId(item.getId()).stream()
+                            .map(commentMapper::toCommentDtoResponse).collect(Collectors.toList()));
+                    List<Booking> bookings = bookingRepositoryJpa.findByItemIdBooking(item.getId());
+                        if (bookings.size() > 0) {
+                            for (Booking book : bookings) {
+                                if (book.getStart().isBefore(currentDate) && !book.getStatus().equals(Status.REJECTED)) {
+                                    BookingDtoResponse.BookingDtoResponseOwner bookingDtoResponse = bookingMapper.toBookingResponseOwner(book);
+                                    itemDtoResponse.setLastBooking(bookingDtoResponse);
+                                }
+                                if (book.getStart().isAfter(currentDate) && !book.getStatus().equals(Status.REJECTED)) {
+                                    BookingDtoResponse.BookingDtoResponseOwner bookingDtoResponse = bookingMapper.toBookingResponseOwner(book);
+                                    itemDtoResponse.setNextBooking(bookingDtoResponse);
+                                }
+                            }
+                        }
+                        return itemDtoResponse;
+                    }).collect(Collectors.toList());
     }
 
     public List<ItemDtoResponse> searchNameItemsAndDescription(String query) {
         if (query.isEmpty()) {
             return new ArrayList<>();
         }
-        List<Item> items = itemStorage.searchNameItemsAndDescription(query);
+        List<Item> items = itemRepositoryJpa.findByNameAndDescription(query.toLowerCase());
         log.info("Найдены вещи по запросу - " + query);
         return items.stream()
                 .map(itemMapper::toItemDtoResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CommentDtoResponse createCommentItem(Long userId, Long itemId, CommentDto commentDto) {
+        validate(userId, itemId);
+        Comment comment = commentMapper.toComment(commentDto);
+        User user = userRepositoryJpa.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        Item item = itemRepositoryJpa.findById(itemId)
+                .orElseThrow(() -> new DataNotFoundException("Item not found"));
+        comment.setAuthor(user.getName());
+        comment.setItem(item);
+        return commentMapper.toCommentDtoResponse(commentRepositoryJpa.save(comment));
+    }
+
+    private void validate(Long userId, Long itemId) {
+        LocalDateTime currentDate = LocalDateTime.now();
+        if (bookingRepositoryJpa.findByItemIdAndBookerIdAndEndBefore(itemId, userId, currentDate).size() == 0) {
+            throw new ValidationException("User not found or Booking not completed");
+        }
     }
 }
