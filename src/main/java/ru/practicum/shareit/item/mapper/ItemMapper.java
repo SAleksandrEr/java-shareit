@@ -12,11 +12,16 @@ public interface ItemMapper {
 
     @Mapping(target = "lastBooking", ignore = true)
     @Mapping(target = "nextBooking", ignore = true)
+    @Mapping(target = "requestId", source = "item.request.id")
     ItemDtoResponse toItemDtoResponse(Item item);
 
     Item toItemDtoPatch(ItemDtoPatch item);
 
+    @Mapping(target = "requestId", source = "item.request.id")
     ItemDtoResponse toItemDtoResponseOwner(Item item);
+
+    @Mapping(target = "requestId", source = "item.request.id")
+    ItemDtoResponse.ItemDtoResponseRequest toItemDtoResponseRequest(Item item);
 
     @Mapper(componentModel = "spring")
     interface CommentMapper {

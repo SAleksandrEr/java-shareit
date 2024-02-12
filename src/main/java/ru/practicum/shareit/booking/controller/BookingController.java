@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.dto.GetBookingParam;
 import ru.practicum.shareit.booking.model.State;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.ValidationException;
@@ -34,10 +35,10 @@ public class BookingController {
 
     @Transactional
     @PatchMapping("/{bookingId}")
-    public BookingDtoResponse updateItem(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public BookingDtoResponse updateBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
                                              @PathVariable Long bookingId,
                                              @RequestParam(value = "approved") Boolean approved) {
-        if ((userId != null) && (bookingId != null)) {
+        if ((userId != null) && (bookingId > 0)) {
             return bookingService.updateStatusBooking(userId, bookingId, approved);
         } else {
             throw new ValidationException("Invalid data");
@@ -51,13 +52,24 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoResponse> getBookingByCurrentUser(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                            @RequestParam(value = "state", required = false, defaultValue = "ALL") String state) {
-        return bookingService.getBookingByCurrentUser(userId, State.valueOf(state));
+                                                            @RequestParam(value = "state", required = false, defaultValue = "ALL") String state,
+                                                            @RequestParam(defaultValue = "0", required = false) int from,
+                                                            @RequestParam(defaultValue = "10", required = false) int size) {
+        if (from < 0 || size < 1) {
+            throw new ValidationException("Param - <from> or <size> is not correct");
+        }
+
+        return bookingService.getBookingByCurrentUser(userId, State.valueOf(state), GetBookingParam.pageRequest(from, size));
     }
 
     @GetMapping("/owner")
     public List<BookingDtoResponse> getBookingByOwner(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                            @RequestParam(value = "state", required = false, defaultValue = "ALL") String state) {
-        return bookingService.getBookingByOwner(userId, State.valueOf(state));
+                                                      @RequestParam(value = "state", required = false, defaultValue = "ALL") String state,
+                                                      @RequestParam(defaultValue = "0", required = false) int from,
+                                                      @RequestParam(defaultValue = "10", required = false) int size) {
+        if (from < 0 || size < 1) {
+            throw new ValidationException("Param - <from> or <size> is not correct");
+        }
+        return bookingService.getBookingByOwner(userId, State.valueOf(state), GetBookingParam.pageRequest(from, size));
     }
 }

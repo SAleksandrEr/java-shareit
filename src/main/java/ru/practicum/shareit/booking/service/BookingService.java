@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,13 +79,13 @@ public class BookingService {
                 .orElseThrow(() -> new DataNotFoundException("User is not owner or author")));
     }
 
-    public List<BookingDtoResponse> getBookingByCurrentUser(Long userId, State state) {
+    public List<BookingDtoResponse> getBookingByCurrentUser(Long userId, State state, Pageable page) {
         userRepositoryJpa.findById(userId).orElseThrow(() -> new DataNotFoundException("User not found"));
             List<Booking> bookingList;
             LocalDateTime currentDate = LocalDateTime.now().withNano(0);
         switch (state) {
             case ALL:
-                bookingList = bookingRepositoryJpa.findByBookerIdOrderByStartDesc(userId);
+                bookingList = bookingRepositoryJpa.findByBookerIdOrderByStartDesc(userId,page).getContent();
                 break;
             case CURRENT:
                 bookingList = bookingRepositoryJpa.findByBookerIdAndEndAfterAndStartBeforeOrderByStartDesc(userId, currentDate, currentDate);
@@ -108,15 +109,13 @@ public class BookingService {
         return bookingList.stream().map(bookingMapper::toBookingResponse).collect(Collectors.toList());
     }
 
-    public List<BookingDtoResponse> getBookingByOwner(Long userId, State state) {
+    public List<BookingDtoResponse> getBookingByOwner(Long userId, State state, Pageable page) {
        userRepositoryJpa.findById(userId).orElseThrow(() -> new DataNotFoundException("User not found"));
-       List<Item> itemsList = itemRepositoryJpa.findItemsByUserId(userId);
-       if (itemsList.size() > 0) {
            List<Booking> bookingList;
            LocalDateTime currentDate = LocalDateTime.now().withNano(0);;
            switch (state) {
                case ALL:
-                   bookingList = bookingRepositoryJpa.findByItemUserIdOrderByStartDesc(userId);
+                   bookingList = bookingRepositoryJpa.findByItemUserIdOrderByStartDesc(userId, page).getContent();
                    break;
                case CURRENT:
                    bookingList = bookingRepositoryJpa.findByItemUserIdAndEndAfterAndStartBeforeOrderByStartDesc(userId, currentDate, currentDate);
@@ -137,10 +136,7 @@ public class BookingService {
                default:
                    throw new ValidationException("Unknown state: " + state);
            }
-           return bookingList.stream().map(bookingMapper::toBookingResponse).collect(Collectors.toList());
-       } else {
-           throw new ValidationException("Invalid data " + itemsList);
-       }
+          return bookingList.stream().map(bookingMapper::toBookingResponse).collect(Collectors.toList());
     }
 
         private void validate(BookingDto booking) {

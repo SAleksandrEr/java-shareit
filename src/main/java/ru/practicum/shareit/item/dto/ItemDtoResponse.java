@@ -28,6 +28,8 @@ public class ItemDtoResponse {
 
     private List<CommentDtoResponse> comments;
 
+    private Long requestId;
+
     @Getter
     @Setter
     @SuperBuilder
@@ -38,4 +40,21 @@ public class ItemDtoResponse {
 
         private String name;
     }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor(force = true)
+    public static class ItemDtoResponseRequest {
+        private Long id;
+
+        private String name;
+
+        private String description;
+
+        private Boolean available;
+
+        private Long requestId;
+    }
+
 }

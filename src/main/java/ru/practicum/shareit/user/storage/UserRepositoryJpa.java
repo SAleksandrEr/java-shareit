@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.user.model.User;
 
+
 public interface UserRepositoryJpa extends JpaRepository<User, Long> {
 
     @Modifying
