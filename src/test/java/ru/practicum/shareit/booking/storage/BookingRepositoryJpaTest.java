@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.item.model.Item;
@@ -155,5 +156,379 @@ class BookingRepositoryJpaTest {
         assertThat(bookingOwner, notNullValue());
         Optional<Booking> bookingBooker = bookingRepositoryJpa.findByBookingIdAndUserId(booking.getId(), booker.getId());
         assertThat(bookingBooker, notNullValue());
+    }
+
+    @Test
+    void testFindByBookerIdOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(2);
+        LocalDateTime endDate1 = currentDate.plusHours(3);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByBookerIdOrderByStartDesc(booker.getId(), Pageable.ofSize(10)).getContent();
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByBookerIdAndEndAfterAndStartBeforeOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.minusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(3);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByBookerIdAndEndAfterAndStartBeforeOrderByStartDesc(booker.getId(), currentDate, currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByBookerIdAndEndBeforeOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.minusHours(2);
+        LocalDateTime endDate1 = currentDate.minusHours(1);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByBookerIdAndEndBeforeOrderByStartDesc(booker.getId(), currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByBookerIdAndStartAfterAndEndAfterOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByBookerIdAndStartAfterAndEndAfterOrderByStartDesc(booker.getId(), currentDate, currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByBookerIdAndStatusOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByBookerIdAndStatusOrderByStartDesc(booker.getId(), Status.WAITING);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+        assertThat(bookingList.get(0).getStatus(), equalTo(booking.getStatus()));
+    }
+
+    @Test
+    void testFindByItemUserIdOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemUserIdOrderByStartDesc(userOwner.getId(), Pageable.ofSize(10)).getContent();
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByItemUserIdAndEndAfterAndStartBeforeOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.minusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(1);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemUserIdAndEndAfterAndStartBeforeOrderByStartDesc(userOwner.getId(), currentDate, currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByItemUserIdAndEndBeforeOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.minusHours(2);
+        LocalDateTime endDate1 = currentDate.minusHours(1);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemUserIdAndEndBeforeOrderByStartDesc(userOwner.getId(), currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByItemUserIdAndStartAfterAndEndAfterOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemUserIdAndStartAfterAndEndAfterOrderByStartDesc(userOwner.getId(), currentDate, currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByItemUserIdAndStatusOrderByStartDesc() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemUserIdAndStatusOrderByStartDesc(userOwner.getId(), Status.WAITING);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+        assertThat(bookingList.get(0).getStatus(), equalTo(booking.getStatus()));
+    }
+
+    @Test
+    void testFindByItemId() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusHours(1);
+        LocalDateTime endDate1 = currentDate.plusHours(2);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemId(item.getId());
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
+    }
+
+    @Test
+    void testFindByItemIdAndBookerIdAndEndBefore() {
+        User userOwner = new User();
+        userOwner.setName("test");
+        userOwner.setEmail("test@test.ru");
+        User booker = new User();
+        booker.setName("booker");
+        booker.setEmail("booker@test.ru");
+        Item item = new Item();
+        item.setName("test1");
+        item.setDescription("test_test");
+        item.setAvailable(true);
+        item.setUser(userOwner);
+        em.persist(userOwner);
+        em.persist(item);
+        em.persist(booker);
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.minusHours(2);
+        LocalDateTime endDate1 = currentDate.minusHours(1);
+        Booking booking = new Booking();
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setBooker(booker);
+        booking.setItem(item);
+        booking.setStatus(Status.WAITING);
+        em.persist(booking);
+        List<Booking> bookingList = bookingRepositoryJpa.findByItemIdAndBookerIdAndEndBefore(item.getId(), booker.getId(), currentDate);
+        assertThat(bookingList.size(), notNullValue());
+        assertThat(bookingList.get(0).getId(), equalTo(booking.getId()));
     }
 }

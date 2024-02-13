@@ -44,9 +44,6 @@ public class ItemRequestService {
     public List<ItemRequestResponse.ItemRequestResponseItems> findItemRequest(Long userId) {
         userRepositoryJpa.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
-        // проверяем есть такой пользователь
-        // выгружаем все реквесты пользователя
-        // выгружаем items реквестов пользователей.....
         List<ItemRequest> itemRequestList = itemRequestRepositoryJPA.findAllByRequestorIdOrderByCreatedDesc(userId);
         List<Long> list = itemRequestList.stream().map(ItemRequest::getId).collect(Collectors.toList());
         List<Item> items = itemRepositoryJpa.findAllByRequestIdInOrderByIdDesc(list);

@@ -87,4 +87,91 @@ public class ItemServiceIntTest {
         assertThat(itemDtoResponseList.get(0).getComments().get(0).getAuthorName(), equalTo(commentDtoResponse.getAuthorName()));
         assertThat(itemDtoResponseList.get(0).getComments().get(0).getCreated(), equalTo(commentDtoResponse.getCreated()));
     }
+
+    @Test
+    void testGetItemId() throws InterruptedException {
+        ItemDto itemDto = ItemDto.builder().name("test1").description("test1").available(true).build();
+        UserDtoRequest userDtoOwner = UserDtoRequest.builder().name("testOwner").email("testOwner@test.ru").build();
+        UserDtoRequest userDtoBooker = UserDtoRequest.builder().name("testBooker").email("testBooker@test.ru").build();
+        UserResponse userResponseOwner = userService.createUser(userDtoOwner);
+        UserResponse userResponseBooker = userService.createUser(userDtoBooker);
+        ItemDtoResponse itemDtoResponse = itemService.createItem(userResponseOwner.getId(), itemDto);
+        CommentDto commentDto = CommentDto.builder().text("test1").itemId(itemDtoResponse.getId())
+                .authorId(userResponseBooker.getId()).build();
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusSeconds(1);
+        LocalDateTime endDate1 = currentDate.plusSeconds(2);
+        LocalDateTime startDate2 = currentDate.plusDays(3);
+        LocalDateTime endDate2 = currentDate.plusDays(4);
+        BookingDto bookingDto1 = BookingDto.builder().start(String.valueOf(startDate1)).end(String.valueOf(endDate1))
+                .itemId(itemDtoResponse.getId()).bookerId(userResponseBooker.getId()).build();
+        BookingDto bookingDto2 = BookingDto.builder().start(String.valueOf(startDate2)).end(String.valueOf(endDate2))
+                .itemId(itemDtoResponse.getId()).bookerId(userResponseBooker.getId()).build();
+        BookingDtoResponse bookingDtoResponse1 = bookingService.createBooking(userResponseBooker.getId(),bookingDto1);
+        BookingDtoResponse bookingDtoResponse2 = bookingService.createBooking(userResponseBooker.getId(),bookingDto2);
+        Thread.sleep(20_00);
+        CommentDtoResponse commentDtoResponse = itemService.createCommentItem(userResponseBooker.getId(), itemDtoResponse.getId(), commentDto);
+        ItemDtoResponse itemDtoResponseNew = itemService.getItemId(userResponseOwner.getId(), itemDtoResponse.getId());
+        assertThat(itemDtoResponseNew.getId(), equalTo(itemDtoResponse.getId()));
+        assertThat(itemDtoResponseNew.getName(), equalTo(itemDtoResponse.getName()));
+        assertThat(itemDtoResponseNew.getDescription(), equalTo(itemDtoResponse.getDescription()));
+        assertThat(itemDtoResponseNew.getAvailable(), equalTo(itemDtoResponse.getAvailable()));
+        assertThat(itemDtoResponseNew.getLastBooking().getId(), equalTo(bookingDtoResponse1.getId()));
+        assertThat(itemDtoResponseNew.getLastBooking().getBookerId(), equalTo(bookingDtoResponse1.getBooker().getId()));
+        assertThat(itemDtoResponseNew.getNextBooking().getId(), equalTo(bookingDtoResponse2.getId()));
+        assertThat(itemDtoResponseNew.getNextBooking().getBookerId(), equalTo(bookingDtoResponse2.getBooker().getId()));
+        assertThat(itemDtoResponseNew.getComments().get(0).getId(), equalTo(commentDtoResponse.getId()));
+        assertThat(itemDtoResponseNew.getComments().get(0).getText(), equalTo(commentDtoResponse.getText()));
+        assertThat(itemDtoResponseNew.getComments().get(0).getAuthorName(), equalTo(commentDtoResponse.getAuthorName()));
+        assertThat(itemDtoResponseNew.getComments().get(0).getCreated(), equalTo(commentDtoResponse.getCreated()));
+    }
+
+    @Test
+    void searchNameItemsAndDescription() {
+        ItemDto itemDto = ItemDto.builder().name("test1").description("test1").available(true).build();
+        UserDtoRequest userDtoOwner = UserDtoRequest.builder().name("testOwner").email("testOwner@test.ru").build();
+        UserResponse userResponseOwner = userService.createUser(userDtoOwner);
+        ItemDtoResponse itemDtoResponse = itemService.createItem(userResponseOwner.getId(), itemDto);
+        List<ItemDtoResponse> itemDtoResponseList = itemService.searchNameItemsAndDescription("TeSt", GetItemParam.pageRequest(1, 10));
+        assertThat(itemDtoResponseList.size(), notNullValue());
+        assertThat(itemDtoResponseList.get(0).getId(), equalTo(itemDtoResponse.getId()));
+        assertThat(itemDtoResponseList.get(0).getName(), equalTo(itemDtoResponse.getName()));
+        assertThat(itemDtoResponseList.get(0).getDescription(), equalTo(itemDtoResponse.getDescription()));
+        assertThat(itemDtoResponseList.get(0).getAvailable(), equalTo(itemDtoResponse.getAvailable()));
+    }
+
+    @Test
+    void searchNameItemsAndDescriptionNull() {
+        ItemDto itemDto = ItemDto.builder().name("test1").description("test1").available(true).build();
+        UserDtoRequest userDtoOwner = UserDtoRequest.builder().name("testOwner").email("testOwner@test.ru").build();
+        UserResponse userResponseOwner = userService.createUser(userDtoOwner);
+        itemService.createItem(userResponseOwner.getId(), itemDto);
+        List<ItemDtoResponse> itemDtoResponseList = itemService.searchNameItemsAndDescription("", GetItemParam.pageRequest(1, 10));
+        assertThat(itemDtoResponseList.size(), equalTo(0));
+    }
+
+    @Test
+    void testCreateCommentItem() throws InterruptedException {
+        ItemDto itemDto = ItemDto.builder().name("test1").description("test1").available(true).build();
+        UserDtoRequest userDtoOwner = UserDtoRequest.builder().name("testOwner").email("testOwner@test.ru").build();
+        UserDtoRequest userDtoBooker = UserDtoRequest.builder().name("testBooker").email("testBooker@test.ru").build();
+        UserResponse userResponseOwner = userService.createUser(userDtoOwner);
+        UserResponse userResponseBooker = userService.createUser(userDtoBooker);
+        ItemDtoResponse itemDtoResponse = itemService.createItem(userResponseOwner.getId(), itemDto);
+        CommentDto commentDto = CommentDto.builder().text("test1").itemId(itemDtoResponse.getId())
+                .authorId(userResponseBooker.getId()).build();
+        LocalDateTime currentDate = LocalDateTime.now().withNano(0);
+        LocalDateTime startDate1 = currentDate.plusSeconds(1);
+        LocalDateTime endDate1 = currentDate.plusSeconds(2);
+        BookingDto bookingDto = BookingDto.builder().start(String.valueOf(startDate1)).end(String.valueOf(endDate1))
+                .itemId(itemDtoResponse.getId()).bookerId(userResponseBooker.getId()).build();
+        bookingService.createBooking(userResponseBooker.getId(),bookingDto);
+        Thread.sleep(20_00);
+        CommentDtoResponse commentDtoResponse = itemService.createCommentItem(userResponseBooker.getId(), itemDtoResponse.getId(), commentDto);
+        ItemDtoResponse itemDtoResponseNew = itemService.getItemId(userResponseOwner.getId(), itemDtoResponse.getId());
+        assertThat(commentDtoResponse.getId(), equalTo(itemDtoResponseNew.getComments().get(0).getId()));
+        assertThat(commentDtoResponse.getText(), equalTo(itemDtoResponseNew.getComments().get(0).getText()));
+        assertThat(commentDtoResponse.getAuthorName(), equalTo(itemDtoResponseNew.getComments().get(0).getAuthorName()));
+        assertThat(commentDtoResponse.getCreated(), equalTo(itemDtoResponseNew.getComments().get(0).getCreated()));
+    }
 }

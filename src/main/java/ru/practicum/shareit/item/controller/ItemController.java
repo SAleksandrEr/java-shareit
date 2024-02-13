@@ -23,11 +23,7 @@ public class ItemController {
     @PostMapping
     public ItemDtoResponse createUser(@RequestHeader("X-Sharer-User-Id") Long userId,
                                       @Valid @RequestBody ItemDto itemDto) {
-        if (userId != null) {
-            return itemService.createItem(userId, itemDto);
-        } else {
-            throw new ValidationException("Invalid data - userId");
-        }
+        return itemService.createItem(userId, itemDto);
     }
 
     @Transactional
@@ -50,11 +46,7 @@ public class ItemController {
         if (from < 0 || size < 1) {
             throw new ValidationException("Param - <from> or <size> is not correct");
         }
-        if (userId != null) {
             return itemService.findItemsByUserId(userId, GetItemParam.pageRequest(from, size));
-        } else {
-            throw new ValidationException("Invalid date - userId or itemId");
-        }
     }
 
     @GetMapping("/search")

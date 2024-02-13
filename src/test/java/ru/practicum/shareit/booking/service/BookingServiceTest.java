@@ -198,4 +198,56 @@ class BookingServiceTest {
 
         Assertions.assertEquals("User is not owner", exception.getMessage());
     }
+
+    @Test
+    void testUpdateStatusBookingNegative() {
+        BookingService bookingService = new BookingService(bookingMapper, bookingRepositoryJpa, userRepositoryJpa, itemRepositoryJpa);
+        User user = new User();
+        user.setId(1L);
+        user.setName("test");
+        user.setEmail("test@test.ru");
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("test");
+        item.setDescription("test");
+        item.setAvailable(false);
+        item.setUser(user);
+        Booking booking = new Booking();
+        booking.setId(1L);
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        booking.setStatus(Status.WAITING);
+        booking.setBooker(user);
+        Mockito.when(userRepositoryJpa.findById(anyLong())).thenReturn(Optional.of(user));
+        Mockito.when(bookingRepositoryJpa.findByBookingIdAndOwner(anyLong(), anyLong())).thenReturn(Optional.of(booking));
+        Mockito.when(bookingRepositoryJpa.updateBooking(any(), anyLong())).thenReturn(1);
+        bookingService.updateStatusBooking(user.getId(), booking.getId(), false);
+        Assertions.assertEquals(booking.getStatus(), Status.REJECTED);
+    }
+
+    @Test
+    void testsCreateBookingExceptionNull() {
+        BookingService bookingService = new BookingService(bookingMapper, bookingRepositoryJpa, userRepositoryJpa, itemRepositoryJpa);
+        User user = new User();
+        user.setId(1L);
+        user.setName("test");
+        user.setEmail("test@test.ru");
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("test");
+        item.setDescription("test");
+        item.setAvailable(true);
+        item.setUser(user);
+        Booking booking = new Booking();
+        booking.setId(1L);
+        booking.setStart(startDate1);
+        booking.setEnd(endDate1);
+        Mockito.when(userRepositoryJpa.findById(anyLong())).thenReturn(Optional.of(user));
+        Mockito.when(itemRepositoryJpa.findById(anyLong())).thenReturn(Optional.of(item));
+        Mockito.when(itemRepositoryJpa.findByIdAndAvailableTrue(anyLong())).thenReturn(null);
+        final ValidationException exception = Assertions.assertThrows(
+                ValidationException.class, () ->  bookingService.createBooking(2L, bookingDto));
+
+        Assertions.assertEquals("Invalid data " + booking.getStart() + " " + booking.getEnd(), exception.getMessage());
+    }
 }

@@ -60,6 +60,19 @@ class ItemControllerTest {
     }
 
     @Test
+    void testCreateUserException() throws Exception {
+        when(itemService.createItem(anyLong(), any())).thenReturn(itemDtoResponse);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Sharer-User-Id", "");
+        mvc.perform(post("/items").headers(headers)
+                        .content(mapper.writeValueAsString(itemDtoResponse))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void testUpdateItem() throws Exception {
         when(itemService.updateItem(anyLong(), any())).thenReturn(itemDtoResponse);
         HttpHeaders headers = new HttpHeaders();

@@ -80,9 +80,6 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
 
     List<Booking> findByItemUserIdAndStatusOrderByStartDesc(Long userId, Status status);
 
-//    @Query("select b " +
-//            "from Booking as b " +
-//            "where b.item.id = ?1")
     List<Booking> findByItemId(Long itemId);
 
     List<Booking> findByItemIdAndBookerIdAndEndBefore(Long itemId, Long userId, LocalDateTime currentDate);

@@ -26,20 +26,12 @@ public class ItemRequestController {
     @PostMapping
     public ItemRequestResponse createItemRequest(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                  @Valid @RequestBody ItemRequestDto itemRequestDto) {
-        if (userId != null) {
             return itemRequestService.createItemRequest(userId, itemRequestDto);
-        } else {
-            throw new ValidationException("Invalid data - userId");
-        }
     }
 
     @GetMapping
     public List<ItemRequestResponse.ItemRequestResponseItems> findIItemRequest(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        if (userId != null) {
             return itemRequestService.findItemRequest(userId);
-        } else {
-            throw new ValidationException("Invalid date - userId");
-        }
     }
 
     @GetMapping("/all")

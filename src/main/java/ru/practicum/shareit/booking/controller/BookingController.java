@@ -26,11 +26,7 @@ public class BookingController {
     @PostMapping
     public BookingDtoResponse createBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
                                             @Valid @RequestBody BookingDto bookingDto) {
-        if (userId != null) {
             return bookingService.createBooking(userId, bookingDto);
-        } else {
-            throw new ValidationException("Invalid data - userId");
-        }
     }
 
     @Transactional
