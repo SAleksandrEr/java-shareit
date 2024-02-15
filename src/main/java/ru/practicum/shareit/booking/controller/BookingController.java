@@ -10,7 +10,6 @@ import ru.practicum.shareit.booking.dto.GetBookingParam;
 import ru.practicum.shareit.booking.model.State;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.ValidationException;
-
 import javax.validation.Valid;
 import java.util.List;
 
