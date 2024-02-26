@@ -23,11 +23,7 @@ public class ItemController {
     @PostMapping
     public ItemDtoResponse createUser(@RequestHeader("X-Sharer-User-Id") Long userId,
                                       @Valid @RequestBody ItemDto itemDto) {
-        if (userId != null) {
-            return itemService.createItem(userId, itemDto);
-        } else {
-            throw new ValidationException("Invalid data - userId");
-        }
+        return itemService.createItem(userId, itemDto);
     }
 
     @Transactional
@@ -44,17 +40,23 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDtoResponse> findItemsByUserId(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        if (userId != null) {
-            return itemService.findItemsByUserId(userId);
-        } else {
-            throw new ValidationException("Invalid date - userId or itemId");
+    public List<ItemDtoResponse> findItemsByUserId(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                                   @RequestParam(defaultValue = "0", required = false) int from,
+                                                   @RequestParam(defaultValue = "10", required = false) int size) {
+        if (from < 0 || size < 1) {
+            throw new ValidationException("Param - <from> or <size> is not correct");
         }
+            return itemService.findItemsByUserId(userId, GetItemParam.pageRequest(from, size));
     }
 
     @GetMapping("/search")
-    public List<ItemDtoResponse> searchNameItemsAndDescription(@RequestParam(value = "text", required = false) String query) {
-        return itemService.searchNameItemsAndDescription(query);
+    public List<ItemDtoResponse> searchNameItemsAndDescription(@RequestParam(value = "text", required = false) String query,
+                                                               @RequestParam(defaultValue = "0", required = false) int from,
+                                                               @RequestParam(defaultValue = "10", required = false) int size) {
+        if (from < 0 || size < 1) {
+            throw new ValidationException("Param - <from> or <size> is not correct");
+        }
+        return itemService.searchNameItemsAndDescription(query, GetItemParam.pageRequest(from, size));
     }
 
     @Transactional

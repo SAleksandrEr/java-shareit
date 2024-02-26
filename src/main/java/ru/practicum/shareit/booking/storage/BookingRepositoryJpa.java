@@ -1,8 +1,11 @@
 package ru.practicum.shareit.booking.storage;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 
@@ -10,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
 
     @Query("select b " +
@@ -56,7 +60,7 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
             "OR b.booker.id = ?2) ")
     Optional<Booking> findByBookingIdAndUserId(Long bookingId, Long userId);
 
-    List<Booking> findByBookerIdOrderByStartDesc(Long userId);
+    Page<Booking> findByBookerIdOrderByStartDesc(Long userId, Pageable page);
 
     List<Booking> findByBookerIdAndEndAfterAndStartBeforeOrderByStartDesc(Long userId, LocalDateTime currentDateStart, LocalDateTime currentDate);
 
@@ -66,7 +70,7 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
 
     List<Booking> findByBookerIdAndStatusOrderByStartDesc(Long userId, Status status);
 
-    List<Booking> findByItemUserIdOrderByStartDesc(Long userId);
+    Page<Booking> findByItemUserIdOrderByStartDesc(Long userId, Pageable page);
 
     List<Booking> findByItemUserIdAndEndAfterAndStartBeforeOrderByStartDesc(Long userId, LocalDateTime currentDateStart, LocalDateTime currentDate);
 
@@ -76,10 +80,7 @@ public interface BookingRepositoryJpa extends JpaRepository<Booking, Long> {
 
     List<Booking> findByItemUserIdAndStatusOrderByStartDesc(Long userId, Status status);
 
-    @Query("select b " +
-            "from Booking as b " +
-            "where b.item.id = ?1")
-    List<Booking> findByItemIdBooking(Long itemId);
+    List<Booking> findByItemId(Long itemId);
 
     List<Booking> findByItemIdAndBookerIdAndEndBefore(Long itemId, Long userId, LocalDateTime currentDate);
 }

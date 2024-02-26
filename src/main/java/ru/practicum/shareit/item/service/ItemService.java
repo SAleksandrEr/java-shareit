@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.CommentRepositoryJpa;
 import ru.practicum.shareit.item.storage.ItemRepositoryJpa;
+import ru.practicum.shareit.request.storage.ItemRequestRepositoryJPA;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserRepositoryJpa;
 
@@ -45,11 +47,16 @@ public class ItemService {
 
     private final CommentRepositoryJpa commentRepositoryJpa;
 
+    private final ItemRequestRepositoryJPA itemRequestRepositoryJPA;
+
     @Transactional
     public ItemDtoResponse createItem(Long userId, ItemDto itemDto) {
         Item item = itemMapper.toItem(itemDto);
         User user = userRepositoryJpa.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
+        if (itemDto.getRequestId() != null) {
+            itemRequestRepositoryJPA.findById(itemDto.getRequestId()).ifPresent(item::setRequest);
+        }
         item.setUser(user);
         return itemMapper.toItemDtoResponse(itemRepositoryJpa.save(item));
     }
@@ -92,7 +99,7 @@ public class ItemService {
         itemDtoResponse.setComments(commentRepositoryJpa.findByItemId(item.getId()).stream()
                 .map(commentMapper::toCommentDtoResponse).collect(Collectors.toList()));
         if (Objects.equals(item.getUser().getId(), userId)) {
-            List<Booking> bookings = bookingRepositoryJpa.findByItemIdBooking(item.getId());
+            List<Booking> bookings = bookingRepositoryJpa.findByItemId(item.getId());
             if (bookings.size() > 0) {
                 for (Booking order : bookings) {
                     if (order.getStart().isBefore(currentDate) && !order.getStatus().equals(Status.REJECTED)) {
@@ -110,10 +117,10 @@ public class ItemService {
             return itemDtoResponse;
     }
 
-    public List<ItemDtoResponse> findItemsByUserId(Long userid) {
+    public List<ItemDtoResponse> findItemsByUserId(Long userid, Pageable page) {
         userRepositoryJpa.findById(userid)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
-        List<Item> items = itemRepositoryJpa.findItemsByUserId(userid);
+        List<Item> items = itemRepositoryJpa.findItemsByUserId(userid, page).getContent();
         log.info("Получены вещи пользователя с id " + userid);
         LocalDateTime currentDate = LocalDateTime.now().withNano(0);
         return items.stream()
@@ -121,7 +128,7 @@ public class ItemService {
                     ItemDtoResponse itemDtoResponse = itemMapper.toItemDtoResponseOwner(item);
                     itemDtoResponse.setComments(commentRepositoryJpa.findByItemId(item.getId()).stream()
                             .map(commentMapper::toCommentDtoResponse).collect(Collectors.toList()));
-                    List<Booking> bookings = bookingRepositoryJpa.findByItemIdBooking(item.getId());
+                    List<Booking> bookings = bookingRepositoryJpa.findByItemId(item.getId());
                         if (bookings.size() > 0) {
                             for (Booking book : bookings) {
                                 if (book.getStart().isBefore(currentDate) && !book.getStatus().equals(Status.REJECTED)) {
@@ -138,11 +145,11 @@ public class ItemService {
                     }).collect(Collectors.toList());
     }
 
-    public List<ItemDtoResponse> searchNameItemsAndDescription(String query) {
+    public List<ItemDtoResponse> searchNameItemsAndDescription(String query, Pageable page) {
         if (query.isEmpty()) {
             return new ArrayList<>();
         }
-        List<Item> items = itemRepositoryJpa.findByNameAndDescription(query.toLowerCase());
+        List<Item> items = itemRepositoryJpa.findByNameAndDescription(query.toLowerCase(), page).getContent();
         log.info("Найдены вещи по запросу - " + query);
         return items.stream()
                 .map(itemMapper::toItemDtoResponse)

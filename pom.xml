@@ -188,6 +188,13 @@
 					<artifactId>jacoco-maven-plugin</artifactId>
 					<version>0.8.11</version>
 					<configuration>
+						<excludes>
+							<exclude>**/*ItemMapperImpl.class</exclude>
+							<exclude>**/*ItemMapper$CommentMapperImpl.class</exclude>
+							<exclude>**/*ItemRequestMapperImpl.class</exclude>
+							<exclude>**/*UserMapperImpl.class</exclude>
+							<exclude>**/*BookingMapperImpl.class</exclude>
+						</excludes>
 						<output>file</output>
 					</configuration>
 					<executions>
