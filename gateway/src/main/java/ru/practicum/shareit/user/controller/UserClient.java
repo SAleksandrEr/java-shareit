@@ -29,7 +29,7 @@ public class UserClient extends BaseClient {
     }
 
     public ResponseEntity<Object> updateUser(UserDtoPatch userPatch) {
-        return patch("/"+ userPatch.getId(), userPatch);
+        return patch("/" + userPatch.getId(), userPatch);
     }
 
     public ResponseEntity<Object> getAllUsers() {
