@@ -146,9 +146,6 @@ public class ItemService {
     }
 
     public List<ItemDtoResponse> searchNameItemsAndDescription(String query, Pageable page) {
-        if (query.isEmpty()) {
-            return new ArrayList<>();
-        }
         List<Item> items = itemRepositoryJpa.findByNameAndDescription(query.toLowerCase(), page).getContent();
         log.info("Найдены вещи по запросу - " + query);
         return items.stream()

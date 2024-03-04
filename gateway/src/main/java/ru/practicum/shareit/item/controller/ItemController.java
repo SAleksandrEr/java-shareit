@@ -1,12 +1,14 @@
 package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/items")
@@ -49,6 +51,9 @@ public class ItemController {
                                                                @RequestParam(defaultValue = "10", required = false) int size) {
         if (from < 0 || size < 1) {
             throw new ValidationException("Param - <from> or <size> is not correct");
+        }
+        if (query.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
         return itemClient.searchNameItemsAndDescription(query, userId, from, size);
     }

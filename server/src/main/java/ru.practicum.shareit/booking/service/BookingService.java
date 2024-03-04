@@ -140,11 +140,14 @@ public class BookingService {
     }
 
         private void validate(BookingDto booking) {
+            Item item = itemRepositoryJpa.findByIdAndAvailableTrue(booking.getItemId());
+            if (item == null) {
+                throw new ValidationException("Invalid data item isNull");
+            }
             LocalDateTime startDate = LocalDateTime.parse(booking.getStart());
             LocalDateTime endDate = LocalDateTime.parse(booking.getEnd());
             List<Booking> bookingList = bookingRepositoryJpa.findByBookingStartBeforeAndEndBefore(startDate, endDate, Status.REJECTED, booking.getItemId());
-            Item item = itemRepositoryJpa.findByIdAndAvailableTrue(booking.getItemId());
-            if ((bookingList.size() > 0) || (item == null)) {
+            if (bookingList.size() > 0) {
                 throw new ValidationException("Invalid data " + booking.getStart() + " " + booking.getEnd());
             }
     }
