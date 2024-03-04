@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  gateway:
+    build: ./gateway
+    image: gateway
+    container_name: gateway_shareit
+    ports:
+      - "8081:8081"
+      - "8080:8080"
+    depends_on:
+      - server
+    volumes:
+     - /usr/share/zoneinfo/Europe:/usr/share/zoneinfo/Europe:ro
+    environment:
+      - SHAREIT_SERVER_URL=http://server:9090
+
+  server:
+    build: ./server
+    image: server
+    container_name: server_shareit
+    ports:
+      - "9091:9091"
+      - "9090:9090"
+    depends_on:
+      - db
+    volumes:
+     - /usr/share/zoneinfo/Europe:/usr/share/zoneinfo/Europe:ro
+    environment:
+      - DB_NAME=shareit
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=purrrrrr
+      - DB_HOST=db
+      - DB_PORT=5432
+
+  db:
+    image: postgres:13.7-alpine
+    container_name: database
+    ports:
+      - "6541:5432"
+    volumes:
+     - /usr/share/zoneinfo/Europe:/usr/share/zoneinfo/Europe:ro
+    environment:
+      - POSTGRES_DB=shareit
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=purrrrrr
